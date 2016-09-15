@@ -11,6 +11,14 @@
 
 
 
+
+
+
+(defn eval-if [exp env]                                     ;;对if语句求值
+  (if (true? (eval (if-predicate exp) env))
+    (eval (if-consequent exp) env)
+    (eval (if-alternative exp) env)))
+
 (defn list-of-values [exps env]
   (if (no-operands? exps)
     '()
@@ -23,7 +31,7 @@
     (primitive-procedure? procedure)
       (apply-primitive-procedure procedure arguments) ;;应用基本过程
 
-    (compound-procedure? procedure)
+    (compound-procedure? procedure)                         ;;递归下降化约高级过程
       (eval-sequence
         (procedure-body procedure)
         (extend-environment
