@@ -7,12 +7,116 @@
   (println error-msg)
   (throw IllegalStateException))
 
+(defn pair? [exp]
+  (list? exp))                                              ;;The pair? function int clj is list?
+
+(defn car [exp]
+  (first exp))
+
+(defn cadr [exp]
+  (first (rest exp)))
+
+(defn caadr [exp]
+  (first (first (rest exp))))
+
+(defn caddr [exp]
+  (nth exp 2))
+
+(defn cdadr [exp]
+  (rest (first (rest exp))))
+
+(defn cddr [exp]
+  (rest (rest exp)))
+
+(defn tagged-list? [exp tag]
+  (if (pair? exp)
+    (= (first exp) tag)
+    false))
+
+;;Handle lambda expression
+(defn lambda? [exp]
+  (tagged-list? exp 'lambda))
+
+(defn lambda-parameters [exp]
+  (cadr exp))
+
+(defn lambda-body [exp]
+  (cddr exp))
+
+(defn make-lambda [parameters body]
+  (cons 'lambda (cons parameters body)))
+
+;; handle definition
+(defn definition? [exp]
+  (tagged-list? exp 'define))
+
+(defn definition-variable [exp]
+  (if (symbol? (cadr exp))
+    (cadr exp)
+    (caadr exp)))
+
+(defn definition-value [exp]
+  (if (symbol? (cadr exp))
+    (caddr exp)
+    (make-lambda (cdadr exp)
+                 (cddr exp))))
 
 
 
 
 
 
+
+
+;;  变量赋值
+;;  申请变量
+;;  parse set! 语句
+(defn assignment? [exp]
+  (tagged-list? exp 'set))
+
+(defn assignment-variable [exp]
+  (cadr exp))
+
+(defn assignment-value [exp]
+  (caddr exp))
+
+;; judge a Number or a Strings
+(defn self-evaluating? [exp]
+  (cond
+    (number? exp) true
+    (string? exp) true
+    :else false))
+
+
+(defn quoted? [exp]
+  (tagged-list? exp 'quote))
+
+(defn text-of-quotation [exp]
+  (cadr exp))
+
+(defn variable? [exp]
+  (symbol? exp))
+
+
+
+(defn eval-definition [exp env]
+  (define-variable! (definition-variable exp)
+                    (eval (definition-value exp) env)
+                    env)
+  'ok)
+
+(defn eval-assignment [exp env]
+  (set-variable-value! (assignment-variable exp)
+                       (eval (assignment-value exp) env)
+                       env)
+  'ok)
+
+(defn eval-sequence [exps env]
+  (cond (last-exp? exps) (eval (first-exp exps) env)
+        :else
+          (do
+            (eval (first-exp exps) env)
+            (eval-sequence (rest-exps exps) env))))
 
 (defn eval-if [exp env]                                     ;;对if语句求值
   (if (true? (eval (if-predicate exp) env))
@@ -35,12 +139,11 @@
       (eval-sequence
         (procedure-body procedure)
         (extend-environment
-          procedure-parameters procedure)
-        arguments
-        (procedure-environment procedure))
+          (procedure-parameters procedure)
+          arguments
+          (procedure-environment procedure)))
 
-    :else
-    (error (str "Unknown procedure type -- APPLY" procedure))))
+    :else (error (str "Unknown procedure type -- APPLY" procedure))))
 
 (defn eval [exp env]
   (cond
@@ -69,7 +172,5 @@
       (apply (eval (operator exp) env)
              (list-of-values (operands exp) env))
 
-    :else
-      (error (str  "Unknown expression type -- EVAL " exp))
-    ))
+    :else (error (str  "Unknown expression type -- EVAL " exp))))
 

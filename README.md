@@ -2,4 +2,4 @@
 
 To complete sicp with clj.
 
-Distributed under the Eclipse Public License either version 1.0 .
+Distributed under the GNU GENERAL PUBLIC LICENSE Version 3.
