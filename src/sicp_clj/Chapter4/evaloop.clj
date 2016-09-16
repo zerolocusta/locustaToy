@@ -54,15 +54,50 @@
     (= (car exp) tag)
     false))
 
-
-
-
-(defn cond? [exp]
-  (tagged-list? exp 'cond))
-
 (defn application? [exp]
   (pair? exp))
 
+;;===----------------------------------------------------------------------===
+;; Making Environment
+;;===----------------------------------------------------------------------===
+(defn enclosing-environment [env]
+  (cdr env))
+
+(defn first-frame [env]
+  (car env))
+
+
+
+;;===----------------------------------------------------------------------===
+;; BOOLEAN
+;;===----------------------------------------------------------------------===
+(defn true? [x]
+  (not (= x false)))
+
+(defn false? [x]
+  (= x false))
+
+;;===----------------------------------------------------------------------===
+;; Handle Procedure
+;;===----------------------------------------------------------------------===
+(defn make-procedure [parameters body env]
+  (list 'procedure parameters body env))
+
+(defn compound-procedure? [p]
+  (tagged-list? p 'procedure))
+
+(defn procedure-parameters [p]
+  (cadr p))
+
+(defn procedure-body [p]
+  (caddr p))
+
+(defn procedure-environment [p]
+  (cadddr p))
+
+;;===----------------------------------------------------------------------===
+;; Operate
+;;===----------------------------------------------------------------------===
 (defn operator [exp]
   (car exp))
 
@@ -81,7 +116,7 @@
 (defn begin? [exp]
   (tagged-list? exp 'begin))
 
-(defn begin-action [exp]
+(defn begin-actions [exp]
   (cdr exp))
 
 (defn last-exp? [exp]
@@ -96,12 +131,14 @@
 (defn make-begin [seq]
   (cons 'begin seq))
 
-(defn seuqence->exp [seq]
+(defn sequence->exp [seq]
   (cond (null? seq) seq
         (last-exp? seq) (first-exp seq)
         :else (make-begin seq)))
 
-;;handle if exp
+;;===----------------------------------------------------------------------===
+;; IF Expression
+;;===----------------------------------------------------------------------===
 (defn if? [exp]
   (tagged-list? exp 'if))
 
@@ -119,7 +156,44 @@
 (defn make-if [predicate consequent alternative]
   (list 'if predicate consequent alternative))
 
-;;Handle lambda expression
+;;===----------------------------------------------------------------------===
+;; COND Expression
+;;===----------------------------------------------------------------------===
+(defn cond? [exp]
+  (tagged-list? exp 'cond))
+
+(defn cond-clauses [exp]
+  (cdr exp))
+
+(defn cond-predicate [clause]
+  (car clause))
+
+(defn cond-actions [clause]
+  (cdr clause))
+
+(defn cond-else-clause? [clause]
+  (= (cond-predicate clause) 'else))
+
+(defn expand-clauses [clauses]
+  (if
+    (null? clauses)
+    'false
+    (let [first (car clauses)
+          rest (cdr clauses)]
+      (if (cond-else-clause? first)
+        (if (null? rest)
+          (sequence->exp (cond-actions first))
+          (error (str "ELSE clause isn't last -- COND->IF " clauses)))
+        (make-if (cond-predicate first)
+                 (sequence->exp (cond-actions first))
+                 (expand-clauses rest))))))
+
+(defn cond->if [exp]
+  (expand-clauses (cond-clauses exp)))
+
+;;===----------------------------------------------------------------------===
+;; LAMBDA Expression
+;;===----------------------------------------------------------------------===
 (defn lambda? [exp]
   (tagged-list? exp 'lambda))
 
@@ -147,9 +221,9 @@
     (make-lambda (cdadr exp)
                  (cddr exp))))
 
-;;  变量赋值
-;;  申请变量
-;;  parse set! 语句
+;;===----------------------------------------------------------------------===
+;; ASSIGN Expression
+;;===----------------------------------------------------------------------===
 (defn assignment? [exp]
   (tagged-list? exp 'set))
 
@@ -159,7 +233,9 @@
 (defn assignment-value [exp]
   (caddr exp))
 
-;; judge a Number or a Strings
+;;===----------------------------------------------------------------------===
+;; Number OR String
+;;===----------------------------------------------------------------------===
 (defn self-evaluating? [exp]
   (cond
     (number? exp) true
@@ -197,7 +273,7 @@
             (eval (first-exp exps) env)
             (eval-sequence (rest-exps exps) env))))
 
-(defn eval-if [exp env]                                     ;;对if语句求值
+(defn eval-if [exp env]
   (if (true? (eval (if-predicate exp) env))
     (eval (if-consequent exp) env)
     (eval (if-alternative exp) env)))
