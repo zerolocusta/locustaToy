@@ -13,25 +13,111 @@
 (defn car [exp]
   (first exp))
 
+(defn null? [exp]
+  (or (nil? exp) (empty? exp)))
+
+(defn cdr [exp]                                             ;;To replace rest to cdr and return nil if empty
+  (let [result (rest exp)]
+    (if (= result '())
+      nil
+      result)))
+
 (defn cadr [exp]
-  (first (rest exp)))
+  (car (cdr exp)))
 
 (defn caadr [exp]
-  (first (first (rest exp))))
+  (car (car (cdr exp))))
 
 (defn caddr [exp]
   (nth exp 2))
 
 (defn cdadr [exp]
-  (rest (first (rest exp))))
+  (cdr (car (cdr exp))))
+
+(defn cdddr [exp]
+  (cdr (cdr (cdr exp))))
 
 (defn cddr [exp]
-  (rest (rest exp)))
+  (cdr (cdr exp)))
+
+(defn cadddr [exp]
+  (car (cdr (cdr (cdr exp)))))
+
+
+
+
+
+
 
 (defn tagged-list? [exp tag]
   (if (pair? exp)
-    (= (first exp) tag)
+    (= (car exp) tag)
     false))
+
+
+
+
+(defn cond? [exp]
+  (tagged-list? exp 'cond))
+
+(defn application? [exp]
+  (pair? exp))
+
+(defn operator [exp]
+  (car exp))
+
+(defn operands [exp]
+  (cdr exp))
+
+(defn no-operands? [ops]
+  (null? ops))
+
+(defn first-operand [ops]
+  (car ops))
+
+(defn rest-operands [ops]
+  (cdr ops))
+
+(defn begin? [exp]
+  (tagged-list? exp 'begin))
+
+(defn begin-action [exp]
+  (cdr exp))
+
+(defn last-exp? [exp]
+  (null? (cdr exp)))
+
+(defn first-exp [seq]
+  (car seq))
+
+(defn rest-exps [seq]
+  (cdr seq))
+
+(defn make-begin [seq]
+  (cons 'begin seq))
+
+(defn seuqence->exp [seq]
+  (cond (null? seq) seq
+        (last-exp? seq) (first-exp seq)
+        :else (make-begin seq)))
+
+;;handle if exp
+(defn if? [exp]
+  (tagged-list? exp 'if))
+
+(defn if-predicate [exp]
+  (cadr exp))
+
+(defn if-consequent [exp]
+  (caddr exp))
+
+(defn if-alternative [exp]
+  (if (not (null? (cdddr exp)))                            ;;In clj, (rest '()) => '(), so we should use empty?
+    (cadddr exp)
+    'false))
+
+(defn make-if [predicate consequent alternative]
+  (list 'if predicate consequent alternative))
 
 ;;Handle lambda expression
 (defn lambda? [exp]
@@ -60,13 +146,6 @@
     (caddr exp)
     (make-lambda (cdadr exp)
                  (cddr exp))))
-
-
-
-
-
-
-
 
 ;;  变量赋值
 ;;  申请变量
