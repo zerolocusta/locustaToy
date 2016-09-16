@@ -18,9 +18,10 @@
 
 (defn cdr [exp]                                             ;;To replace rest to cdr and return nil if empty
   (let [result (rest exp)]
-    (if (= result '())
-      nil
-      result)))
+    (cond
+      (= result (list)) nil
+      (= 1 (count list)) (first list)
+      :else result)))
 
 (defn cadr [exp]
   (car (cdr exp)))
@@ -46,9 +47,6 @@
 
 
 
-
-
-
 (defn tagged-list? [exp tag]
   (if (pair? exp)
     (= (car exp) tag)
@@ -58,7 +56,8 @@
   (pair? exp))
 
 ;;===----------------------------------------------------------------------===
-;; Making Environment
+;; Abouts Environment
+;; Using (atom '()) to replace '() in schema
 ;;===----------------------------------------------------------------------===
 (defn enclosing-environment [env]
   (cdr env))
@@ -66,7 +65,46 @@
 (defn first-frame [env]
   (car env))
 
+(def the-empty-environment (list))
 
+(defn make-frame [variables values]
+  (atom (list variables values)))
+
+(defn frame-variable [frame]
+  (car @frame))
+
+(defn frame-values [frame]
+      (cdr @frame))
+
+;;The Frame looks like ( (a b c) (1 2 3) )
+(defn add-binding-to-frame! [var val frame]
+  (let [fvars (car @frame)
+        fvals (cdr @frame)
+        vars (if (seq? fvars) fvars (if (nil? fvars) '() (list fvars)))
+        vals (if (seq? fvals) fvals (if (nil? fvals) '() (list fvals)))]
+    (swap! frame (fn [_] (list (cons var vars) (cons val vals))))))
+
+(defn extend-environment [vars vals base-env]
+  (let [[varlen vallen] [(count vars) (count vals)]]
+    (if (= varlen vallen)
+      (cons (make-frame vars vals) base-env)
+      (if (< varlen vallen)
+        (error (str "Too many args supplied" vars vals))
+        (error (str "Too few args supplied" vars vals))))))
+
+(defn lookup-variable-value [var env]
+  (letfn [(env-loop [env]
+
+            (letfn [(scan [vars vals]
+                      (cond (null? vars) (trampoline env-loop (enclosing-environment env))
+                            (= var (car vars)) (car vals)
+                            :else (recur (cdr vars) (cdr vals))))]
+              (if (= the-empty-environment env)
+                (error (str "Unbound val" val))
+                (let [frame (first-frame env)]
+                  (scan (frame-variable frame) (frame-values frame))))))]
+
+    (env-loop env)))
 
 ;;===----------------------------------------------------------------------===
 ;; BOOLEAN
@@ -96,7 +134,7 @@
   (cadddr p))
 
 ;;===----------------------------------------------------------------------===
-;; Operate
+;; Operator (In lisp , an operator is represent a function
 ;;===----------------------------------------------------------------------===
 (defn operator [exp]
   (car exp))
@@ -206,7 +244,9 @@
 (defn make-lambda [parameters body]
   (cons 'lambda (cons parameters body)))
 
-;; handle definition
+;;===----------------------------------------------------------------------===
+;; DEFINE Expression
+;;===----------------------------------------------------------------------===
 (defn definition? [exp]
   (tagged-list? exp 'define))
 
