@@ -17,11 +17,7 @@
   (or (nil? exp) (empty? exp)))
 
 (defn cdr [exp]                                             ;;To replace rest to cdr and return nil if empty
-  (let [result (rest exp)]
-    (cond
-      (= result (list)) nil
-      (= 1 (count list)) (first list)
-      :else result)))
+  (next exp))
 
 (defn cadr [exp]
   (car (cdr exp)))
@@ -55,6 +51,7 @@
 (defn application? [exp]
   (pair? exp))
 
+
 ;;===----------------------------------------------------------------------===
 ;; Abouts Environment
 ;; Using (atom '()) to replace '() in schema
@@ -74,14 +71,21 @@
   (car @frame))
 
 (defn frame-values [frame]
-      (cdr @frame))
+      (second @frame))
+
+(defn set-car! [frame x]
+  (let [vals (frame-values frame)]
+    (swap! frame (fn [_] (list x vals)))))
+
+(defn set-cdr! [frame x]
+  (let [vars (frame-variable frame)]
+    (swap! frame (fn [_] (list vars x)))))
 
 ;;The Frame looks like ( (a b c) (1 2 3) )
 (defn add-binding-to-frame! [var val frame]
-  (let [fvars (car @frame)
-        fvals (cdr @frame)
-        vars (if (seq? fvars) fvars (if (nil? fvars) '() (list fvars)))
-        vals (if (seq? fvals) fvals (if (nil? fvals) '() (list fvals)))]
+  (let [vars (frame-variable frame)
+        vals (frame-values frame)]
+    ;;bootstrap the set-car! and set-cdr!
     (swap! frame (fn [_] (list (cons var vars) (cons val vals))))))
 
 (defn extend-environment [vars vals base-env]
@@ -105,6 +109,22 @@
                   (scan (frame-variable frame) (frame-values frame))))))]
 
     (env-loop env)))
+
+(defn set-variable-value! [var val env]
+  (letfn [(env-loop [env]
+            (letfn [(scan [vars vals frame]
+                      (cond
+                        (null? vars) (trampoline env-loop (enclosing-environment env))
+                        (= var (car vars)) (set-cdr! frame (cons val (rest vals)))
+                        :else (scan (cdr vars) (car vals) frame)))]
+              (if (= env the-empty-environment)
+                (error (str "Unbound variable -- SET!" var))
+                (let [frame (first-frame env)]
+                  (scan (frame-variable frame)
+                        (frame-values frame)
+                        frame)))))]
+    (env-loop env)))
+
 
 ;;===----------------------------------------------------------------------===
 ;; BOOLEAN
