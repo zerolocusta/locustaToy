@@ -1,8 +1,8 @@
 (ns ch4.eval-apply-loop
   (:require [clojure.pprint :refer [pprint]]))
 
-(declare eval1)
-(declare apply1)
+(declare eval-1)
+(declare apply-1)
 
 (defn error [error-msg]
   (pprint error-msg))
@@ -197,7 +197,7 @@
 (defn driver-loop []
   (prompt-for-input input-prompt)
   (let [input (read)]
-    (let [output (eval1 input the-global-environment)]
+    (let [output (eval-1 input the-global-environment)]
       (announce-output output-prompt)
       (user-print output)))
   (recur))
@@ -376,39 +376,39 @@
 
 (defn eval-definition [exp env]
   (define-variable! (definition-variable exp)
-                    (eval1 (definition-value exp) env)
+                    (eval-1 (definition-value exp) env)
                     env)
   'ok)
 
 (defn eval-assignment [exp env]
   (set-variable-value! (assignment-variable exp)
-                       (eval1 (assignment-value exp) env)
+                       (eval-1 (assignment-value exp) env)
                        env)
   'ok)
 
 (defn eval-sequence [exps env]
-  (cond (last-exp? exps) (eval1 (first-exp exps) env)
+  (cond (last-exp? exps) (eval-1 (first-exp exps) env)
         :else
         (do
-          (eval1 (first-exp exps) env)
+          (eval-1 (first-exp exps) env)
           (eval-sequence (rest-exps exps) env))))
 
 (defn eval-if [exp env]
-  (if (true? (eval1 (if-predicate exp) env))
-    (eval1 (if-consequent exp) env)
-    (eval1 (if-alternative exp) env)))
+  (if (true? (eval-1 (if-predicate exp) env))
+    (eval-1 (if-consequent exp) env)
+    (eval-1 (if-alternative exp) env)))
 
 (defn list-of-values [exps env]
   (if (no-operands? exps)
     '()
-    (cons (eval1 (first-operand exps) env)
+    (cons (eval-1 (first-operand exps) env)
           (list-of-values (rest-operands exps) env))))
 
 ;;===----------------------------------------------------------------------===
 ;; Eval-Apply Loop
 ;;===----------------------------------------------------------------------===
 
-(defn apply1 [procedure arguments]
+(defn apply-1 [procedure arguments]
   (cond
 
     (primitive-procedure? procedure)
@@ -424,7 +424,7 @@
 
     :else (error (str "Unknown procedure type -- APPLY" procedure))))
 
-(defn eval1 [exp env]
+(defn eval-1 [exp env]
   (println "exp " exp)
   (cond
     (self-evaluating? exp) exp                              ;;parse字面量< Number > | < String >
@@ -440,16 +440,16 @@
     (if? exp) (eval-if exp env)                              ;;parse if
 
     (lambda? exp)
-    (make-procedure (lambda-parameters exp)               ;;parse lambda表达式
+    (make-procedure (lambda-parameters exp)                  ;;parse lambda表达式
                     (lambda-body exp)
                     env)
 
     (begin? exp) (eval-sequence (begin-actions exp) env)    ;;parse 串行化语句
 
-    (cond? exp) (eval1 (cond->if exp) env)
+    (cond? exp) (eval-1 (cond->if exp) env)
 
     (application? exp)
-    (apply1 (eval1 (operator exp) env)
+    (apply-1 (eval-1 (operator exp) env)
             (list-of-values (operands exp) env))
 
     :else (error (str  "Unknown expression type -- EVAL " exp))))
