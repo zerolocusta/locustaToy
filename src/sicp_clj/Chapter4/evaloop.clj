@@ -14,7 +14,7 @@
   (first exp))
 
 (defn null? [exp]
-  (or (nil? exp) (empty? exp)))
+  (or (nil? exp) (= exp 'null)))
 
 (defn cdr [exp]                                             ;;To replace rest to cdr and return nil if empty
   (next exp))
@@ -54,7 +54,7 @@
 
 ;;===----------------------------------------------------------------------===
 ;; Abouts Environment
-;; Using (atom '()) to replace '() in schema
+;; Using hashmap to replace frame in sicp
 ;;===----------------------------------------------------------------------===
 (defn enclosing-environment [env]
   (cdr env))
@@ -65,28 +65,19 @@
 (def the-empty-environment (list))
 
 (defn make-frame [variables values]
-  (atom (list variables values)))
+  (atom (zipmap variables values)))
 
 (defn frame-variable [frame]
-  (car @frame))
+  (keys @frame))
 
 (defn frame-values [frame]
-      (second @frame))
+      (vals @frame))
 
-(defn set-car! [frame x]
-  (let [vals (frame-values frame)]
-    (swap! frame (fn [_] (list x vals)))))
 
-(defn set-cdr! [frame x]
-  (let [vars (frame-variable frame)]
-    (swap! frame (fn [_] (list vars x)))))
 
-;;The Frame looks like ( (a b c) (1 2 3) )
+;;The Frame looks like {a 1 b 2 c 3}
 (defn add-binding-to-frame! [var val frame]
-  (let [vars (frame-variable frame)
-        vals (frame-values frame)]
-    ;;bootstrap the set-car! and set-cdr!
-    (swap! frame (fn [_] (list (cons var vars) (cons val vals))))))
+  (swap! frame assoc var val))
 
 (defn extend-environment [vars vals base-env]
   (let [[varlen vallen] [(count vars) (count vals)]]
@@ -98,31 +89,20 @@
 
 (defn lookup-variable-value [var env]
   (letfn [(env-loop [env]
-
-            (letfn [(scan [vars vals]
-                      (cond (null? vars) (trampoline env-loop (enclosing-environment env))
-                            (= var (car vars)) (car vals)
-                            :else (recur (cdr vars) (cdr vals))))]
-              (if (= the-empty-environment env)
-                (error (str "Unbound val" val))
-                (let [frame (first-frame env)]
-                  (scan (frame-variable frame) (frame-values frame))))))]
-
+            (if (= env the-empty-environment)
+              (error (str "Unbound variable " var))
+              (let [this-frame (first-frame env)
+                    val (get @this-frame var)]
+                (if (null? val)
+                  (recur (enclosing-environment env))
+                  val))))]
     (env-loop env)))
+
 
 (defn set-variable-value! [var val env]
   (letfn [(env-loop [env]
-            (letfn [(scan [vars vals frame]
-                      (cond
-                        (null? vars) (trampoline env-loop (enclosing-environment env))
-                        (= var (car vars)) (set-cdr! frame (cons val (rest vals)))
-                        :else (scan (cdr vars) (car vals) frame)))]
-              (if (= env the-empty-environment)
-                (error (str "Unbound variable -- SET!" var))
-                (let [frame (first-frame env)]
-                  (scan (frame-variable frame)
-                        (frame-values frame)
-                        frame)))))]
+            (let [this-frame (first-frame env)
+                  ]))]
     (env-loop env)))
 
 
@@ -368,7 +348,7 @@
 
     (quoted? exp) (text-of-quotation exp)                   ;;parse符号
 
-    (assignment? exo) (eval-assignment exp env)             ;;parse变量赋值
+    (assignment? exp) (eval-assignment exp env)             ;;parse变量赋值
 
     (definition? exp) (eval-definition exp env)             ;;parse函数定义
 
