@@ -1,6 +1,4 @@
-defn max [a b]
-	(println a b)
-	(if (> a b) a b))module Main where
+module Main where
 import Control.Monad
 import Control.Monad.Error
 import System.Environment
@@ -13,13 +11,25 @@ data LispVal = Atom String
              | String String
              | Bool Bool
 
-data LispError = NumAgs Integer [LispVal]
+data LispError = NumArgs Integer [LispVal]
                | TypeMisMatch String LispVal
                | Parser ParseError
                | BadSpecialForm String LispVal
                | NotFunction String String
-               | UnboundVar String
+               | UnboundVar String String
                | Default String
+
+instance Error LispError where
+  noMsg = Default "An error has occurred"
+  strMsg = Default
+
+type ThrowsError = Either LispError
+
+extractValue :: ThrowsError a -> a
+extractValue (Right val) = val
+
+
+trapError action = catchError action (return . show)
 
 parseString :: Parser LispVal
 parseString = do char '"'
@@ -80,6 +90,17 @@ showVal (Bool False) = "#f"
 showVal (List contents) = "(" ++ unwordList contents ++ ")"
 showVal (DottedList head tail) = "(" ++ unwordList head ++ showVal tail ++ ")"
 
+showError :: LispError -> String
+showError (UnboundVar message varname) = message ++ ": " ++ varname
+showError (BadSpecialForm message form) = message ++ ": " ++ show form
+showError (NotFunction message func) = message ++ ": " ++ func
+showError (NumArgs expected found) = "Excepted " ++ show expected ++ " args: found values " ++ unwordList found
+showError (TypeMisMatch expected found) = "Invalid type: expected " ++ expected ++ ", found " ++ show found
+showError (Parser parseErr) = "Parse error at " ++ show parseErr
+
+instance Show LispError where show = showError
+
+
 unwordList :: [LispVal] -> String
 -- unwordList contents = unwords $ map showVal contents 
 unwordList = unwords . map showVal
@@ -91,18 +112,20 @@ spaces = skipMany1 space
 symbol :: Parser Char
 symbol = oneOf "!$%&|*+-/:<=?>@^_~#"
 
-eval :: LispVal -> LispVal
-eval (Atom val) = Atom val
-eval (String val) = String val
-eval (Number val) = Number val
-eval (Bool val) = Bool val
-eval (List [Atom "quote", val]) = val
-eval (List (Atom func : args)) = apply func $ map eval args
+eval :: LispVal -> ThrowsError LispVal
+eval (Atom val) = return $ Atom val
+eval (String val) = return $ String val
+eval (Number val) = return $ Number val
+eval (Bool val) = return $ Bool val
+eval (List [Atom "quote", val]) = return val
+eval (List (Atom func : args)) = mapM eval args >>= apply func
+eval badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
-apply :: (String -> [LispVal] -> LispVal)
-apply func args = maybe (Bool False) ($ args) $ lookup func primitives
+apply :: String -> [LispVal] -> ThrowsError LispVal
+apply func args = maybe (throwError $ NotFunction "Unrecognized primitive function args" func)
+                  ($ args) $ lookup func primitives
 
-primitives :: [(String, ([LispVal] -> LispVal))]
+primitives :: [(String, ([LispVal] -> ThrowsError LispVal))]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
               ("*", numericBinop (*)),
@@ -114,8 +137,9 @@ primitives = [("+", numericBinop (+)),
               ("number?", isNumber),
               ("string?", isString)]
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
-numericBinop op params = Number $ foldl1 op $ map unpackNum params
+numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
+numericBinop op singleVal@[_] = throwError NumArgs 2 singleVal
+numericBinop op params = return . Number $ foldl1 op $ map unpackNum params
 
 --isTrue :: LispVal -> LispVal
 
@@ -140,10 +164,10 @@ unpackNum (String n) = let parsed = reads n in
 unpackNum (List [n]) = unpackNum n
 unpackNum _ = 0
 
-readExpr :: String -> LispVal
+readExpr :: String -> ThrowsError LispVal
 readExpr input = case parse parseExpr "lisp" input of
-                   Left err -> String $ "No Match: " ++ show err
-                   Right val -> val
+                   Left err -> throwError $ Parser err
+                   Right val -> return val
 
 main :: IO ()
 main = do args <- getArgs
