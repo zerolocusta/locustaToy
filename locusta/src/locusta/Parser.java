@@ -94,14 +94,25 @@ public class Parser {
         return new NumVal(identifityStr);
     }
 
+    public StringVal parseString(){
+        return new StringVal(identifityStr);
+    }
+
+    public LispVal parseQuoted() throws IOException {
+        return new QuotedVal(parseExpr());
+    }
 
     public LispVal parseExpr() throws IOException {
 
         switch (getNextTok()){
-            case tok_string :
+            case tok_symbol:
                 return parseSymbol();
-            case tok_number :
-                return parseSymbol();
+            case tok_number:
+                return parseNumber();
+            case tok_string:
+                return parseString();
+            case '\'':
+                return parseQuoted();
         }
         return null;
     }
