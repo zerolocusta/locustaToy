@@ -143,5 +143,11 @@ theme: light
 图中深蓝色的曲线是时钟周期的增长,可以看到从2005年前已经趋于平缓
 - - - -
 [slide]
+男孩和他的原子
+<p align="center">
+<video width="640" height="480"
+controls="controls" src="video/TheWorld'sSmallestMovie.mp4">
+</video>
+</p>
 
-##hello
+> 是一个由IBM研究院拍摄，于2013年发布至YouTube上的定格动画短片，当中描绘了一名男孩与原子做了各种形式的动作。这部短片长度仅一分钟，以扫描隧道显微镜将一氧化碳分子放大1亿倍拍摄。拍摄团队借由操纵一氧化碳分子以拍摄242张相片，后制组合成一部动画。
