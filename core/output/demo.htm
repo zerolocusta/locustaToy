@@ -1,0 +1,283 @@
+<!--
+    Powered By nodePPT - This is probably the best web presentation tool so far!
+    version: 1.4.2
+    site: https://github.com/ksky521/nodePPT
+    date: 
+-->
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>多核处理器的发展 - By zero马达</title>
+    <link rel="stylesheet" media="all" href="./css/nodeppt.css">
+    <link rel="stylesheet" media="only screen and (max-device-width: 480px)" href="./css/phone.css">
+    
+    <link rel="stylesheet" href="./js/highlight/styles/monokai_sublime.css">
+    <link rel="stylesheet" href="./css/font-awesome.css">
+    
+<link rel="stylesheet" href="./css/theme.light.css">
+</head>
+<body>
+<div class="slides">
+    <slides id="container">
+        <slide class="slide"><section class="slide-wrapper"><hgroup>
+<h1>提高CPU的性能的方法</h1>
+<h3>陈达/黄锐聪</h3>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p>在摩尔定律还适用的时候(包括现在),提高芯片的性能有如下方法：</p>
+<ol>
+<li>在有限面积内加入更多的场效应管(缩小器件)</li>
+<li>提高时钟频率</li>
+<li>增加流水线长度</li>
+<li>多核心</li>
+<li>优化指令集</li>
+</ol>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p>首先看缩小器件这个</br>
+理论上我们可以把器件越缩越小,实际上受限于两个因素： </p>
+<ol>
+<li>制作工艺</li>
+<li>分子大小</li>
+</ol>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p>首先来看制作工艺的问题</br>
+硅原子的晶格常数是5.431A,也即0.54nm</br>
+而现在Intel i7的制程已经达到14nm了</br>
+我们的器件已经递减到跟原子/分子一个数量级了!</br>
+制作工艺其实不是问题.其实现在ibm已经是原子级别了,</br>
+<img src="img/Intel-corei7-7700k-cpu.jpg" alt=""></p>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<h3>缩小器件导致的电压降低</h3>
+<p>每次器件缩小就会导致工作电压降低</br>
+这主要是由于小器件更容易被击穿导致的.</br>
+本来场效应管是用作开关的, 结果现在突然发现, </br>
+由于工作电压太低, 这个开关打不开了
+<img src="img/Threshold_formation_nowatermark.gif" alt=""></p>
+<blockquote>
+<p>计算机仿真展现的纳米线MOSFET中反型沟道的形成（电子密度的变化）。阈值电压在0.45V左右</p>
+</blockquote>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<h1>再来看时钟频率问题</h1>
+<p>时钟的上限更明显!</br>
+当电路超过10GHz工作的时候</br>
+时钟的能量损耗特别大</br>
+而且是呈二次方～ 四次方的增大。</br>
+<strong>这个时候整个芯片变成了一根天线。 向周围辐射能量</strong></br>
+<strong>cpu开始疯狂发热, 功耗也不断上升</strong></p>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<h1>增加流水线长度</h1>
+<p>我们也可以通过降低每个时钟周期的处理能力</br>
+通过拆分每一条指令,变为多个较短的指令,</br>
+缩短指令的时钟周期,增加流水线的长度</br>
+使得处理器能够以更高的时钟速度工作</br>
+<img src="img/RISC.jpg" alt=""></p>
+<blockquote>
+<p>RISC机器的五层流水线示意图（IF：读取指令，ID：指令解码，EX：运行，MEM：存储器访问，WB：写回寄存器）</p>
+
+</hgroup><article>
+
+</blockquote>
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p><strong>优点</strong></p>
+<ul>
+<li>减少了处理器执行指令所需要的时钟频率周期，在通常情况下增加了指令的输入频率。</li>
+<li>一些集成电路），例如加法器或者乘法器，通过添加更多的环路使其工作得更快。如果以流水线替代，能相对地减少环路。</li>
+</ul>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p><strong>缺点</strong></p>
+<ul>
+<li>非流水线的处理器每次只运行一个指令。防止分支延时（事实上，每个分支都会产生延时）和串行指令被并行运行产生的问题。设计比较简单和较低生产成本。</li>
+<li>在运行相同的指令时，非流水线处理器的指令传输延迟时间比流水线处理器明显较短。这是因为流水线的处理器必须在数据路径中添加额外触发器。</li>
+<li>太长的流水线可能造成的冒险机制会变得更复杂，所以“CPU流水线设计的级越长，完成一条指令的速度就越快”不过说的是理想或者近似理想的情况</li>
+</ul>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p><img src="img/Intel_Pentium_4_2.80A-4014.jpg" alt=""></p>
+<blockquote>
+<p>有令人惊奇的31级流水线的Pentium 4 NetBurst微架构处理器,拥有3.5GHz, 却因流水线过长而导致高频低能</p>
+</blockquote>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<h1>多核心处理器</h1>
+<h2>既然单核cpu功耗吃不消(主要是发热),</br>时钟也会受到限制,那我们靠着制作工艺把核心缩小, 将多个核心塞进芯片里</h2>
+<p><img src="img/POWER4.jpg" alt=""></p>
+<blockquote>
+<p>最早的商用多核微处理器是 IBM POWER4</p>
+</blockquote>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p><img src="img/Dual_Core_Generic.svg.png" alt=""></p>
+<blockquote>
+<p>双核CPU的架构</p>
+
+</hgroup><article>
+
+</blockquote>
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<p><img src="img/zen_ccx.jpg" alt=""></p>
+<blockquote>
+<p>AMD的Zen架构</p>
+</blockquote>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<h1>指令集优化</h1>
+<p>随着科技的进步，不断的有新指令集被加入到cpu中去。</br>
+之前某个很复杂的运算，说不定在新指令集中一条指令就搞定了，</br>大大提高了效率，ok，这是一件很好的事情</p>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<h2>MMX指令集</h2>
+<ul>
+<li>MMX（Multi Media eXtension，多媒體擴展指令集）指令集是Intel公司于1996年推出的一項多媒體指令增強技術。MMX指令集中包括有57條多媒體指令，通過這些指令可以一次處理多個數據，以得到更高的性能。</li>
+</ul>
+<h2>SSE指令集</h2>
+<ul>
+<li>SSE指令集包括了70條指令，其中包含提高3D圖形運算效率的50條SIMD（單指令多數據技術）浮點運算指令、12條MMX 整數運算增強指令、8條優化內存中連續數據塊傳輸指令。理論上這些指令對目前流行的圖像處理、浮點運算、3D運算、視頻處理、音頻處理等諸多多媒體應用起到全面強化的作用</li>
+</ul>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><hgroup>
+<h1>最后</h1>
+<p>2005年以来,计算机计算能力的增长已经不依赖CPU主频的增长,而是依赖CPU核数的增多</p>
+<p><img src="img/Trends.jpg" alt=""></p>
+<p>图中深蓝色的曲线是时钟周期的增长,可以看到从2005年前已经趋于平缓</p>
+
+</hgroup><article>
+
+
+</article></section></slide>
+<slide class="slide"><section class="slide-wrapper"><article>
+<h2>hello</h2>
+
+</article></section></slide>
+        
+
+        <!-- <slide class="slide logoslide dark nobackground">
+            <article class="flexbox vcenter">
+                <h2 style="color: white;">Powered By nodePPT v1.4.2</h2>
+            </article>
+        </slide> -->
+        <div class="slideTip" id="tip"></div>
+    </slides>
+</div>
+<canvas id="drawBoard" class="draw-board" width="900" height="700"></canvas>
+<div class="progress"><span id="progress"></span></div>
+<div id="_buttons">
+    <div class="_btn-box" id="_btn-box" style="display:none;">
+        <button class="fa fa-arrow-circle-left" id="_btn-prev"></button>
+        <button class="fa fa-arrow-circle-right" id="_btn-next"></button>
+        <button class="fa fa-paint-brush" id="_btn-brush"></button>
+        <button class="fa fa-compress" id="_btn-overview" data-toggle="fa fa-expand"></button>
+    </div>
+    <button class="fa fa-bars" id="_btn-bar"  data-toggle="fa fa-close"></button>
+</div>
+<script src="./js/mixjs/lib/mix.0.3.0.min.js"></script>
+<script>
+var base = location.protocol + '//' + location.host;
+
+var path = (location.pathname + '#').split('/').filter(function(v){
+    return !!v;
+});
+path.pop();
+path = path.join('/');
+MixJS.config({
+    baseURL: [ base, path, 'js'].join('/')+'/'
+});
+
+</script>
+<script src="./js/mixjs/lib/event/broadcast.js"></script>
+<script src="./js/nodeppt.js"></script>
+<script>
+Slide.init({
+    containerID: 'container',
+    drawBoardID: 'drawBoard',
+    slideClass: '.slide',
+    buildClass: '.build',
+    progressID: 'progress',
+    transition: 'slide3',
+    width: 1100,
+    dir: './',
+    
+    //打开下面的注释就开启postMessage方式
+    //访问网址127.0.0.1:8080/ppt/demo#client
+    control:{
+        type: 'postMessage',
+        args:{
+            isControl:  false
+        }
+    },
+    
+    tipID: 'tip'
+});
+MixJS.loadJS('highlight/highlight.pack.js',function(){
+    hljs.tabReplace = '  ';
+    hljs.initHighlightingOnLoad();
+});
+</script>
+<script src="_js_demo.js"></script>
+<link rel="stylesheet" href="_css_demo.css">
+
+<!--placeholder-->
+</body>
+</html>
