@@ -1,6 +1,6 @@
 title: 多核处理器的发展
 speaker: zero马达
-transition: slide3
+transition: move
 files: _js_demo.js, _css_demo.css
 theme: light
 - - - -
